@@ -19,7 +19,7 @@ nest_asyncio.apply()
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(
-    title="TripMate AI",
+    title="TripStrata-AI",
     description=(
         "LangGraph Multi-Agent Travel Planner with Supervisor, Guardrails, "
         "Human-in-the-Loop, and FastAPI Frontend"
@@ -137,7 +137,7 @@ async def approve_travel_plan(request_data: ApprovalRequest):
 async def health_check():
     return {
         "status": "ok",
-        "message": "TripMate AI API is running",
+        "message": "TripStrata-AI API is running",
         "features": [
             "supervisor_agent",
             "input_guardrail",
