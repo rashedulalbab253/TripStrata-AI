@@ -1,4 +1,4 @@
-let currentThreadId = localStorage.getItem("travel_thread_id") || null;
+let currentThreadId = null;
 let latestAnswerMarkdown = "";
 let waitingForApproval = false;
 
@@ -92,7 +92,9 @@ function showResult(answer, threadId, isDraft = false) {
 
   renderMarkdown(resultBox, latestAnswerMarkdown);
   threadInfo.textContent = `Thread ID: ${threadId}`;
-  resultTitle.textContent = isDraft ? "Draft Travel Plan" : "Your Final AI Travel Plan";
+  resultTitle.textContent = isDraft
+    ? "Draft Travel Plan (Human Approval Required)"
+    : "Your Final AI Travel Plan";
   resultSection.classList.remove("hidden");
 
   resultSection.scrollIntoView({
@@ -101,28 +103,43 @@ function showResult(answer, threadId, isDraft = false) {
   });
 }
 
+function scrollToApproval() {
+  const section = document.getElementById("approvalSection");
+  if (section) {
+    section.classList.remove("hidden");
+    section.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+}
+
 function showApproval(data) {
   waitingForApproval = true;
   const section = document.getElementById("approvalSection");
   const approvalRequest = document.getElementById("approvalRequest");
+  const jumpBtn = document.getElementById("jumpApprovalBtn");
+
   approvalRequest.textContent = data.approval_request ||
-    "Approve the draft or provide feedback before the final plan is generated.";
+    "Please review the draft itinerary below. Approve it to generate the final plan or request revisions.";
   section.classList.remove("hidden");
+  if (jumpBtn) {
+    jumpBtn.classList.remove("hidden");
+  }
 }
 
 function hideApproval() {
   waitingForApproval = false;
   document.getElementById("approvalSection").classList.add("hidden");
   document.getElementById("approvalFeedback").value = "";
+  const jumpBtn = document.getElementById("jumpApprovalBtn");
+  if (jumpBtn) {
+    jumpBtn.classList.add("hidden");
+  }
 }
 
 async function sendMessage() {
   hideError();
-
-  if (waitingForApproval) {
-    showError("Please approve or revise the current draft before starting another plan.");
-    return;
-  }
 
   const input = document.getElementById("userInput");
   const message = input.value.trim();
@@ -133,6 +150,7 @@ async function sendMessage() {
   }
 
   setLoading(true, "draft");
+  hideApproval();
 
   try {
     const response = await fetch("/api/travel", {
@@ -142,7 +160,7 @@ async function sendMessage() {
       },
       body: JSON.stringify({
         message: message,
-        thread_id: currentThreadId
+        thread_id: null
       })
     });
 
@@ -153,8 +171,6 @@ async function sendMessage() {
     }
 
     currentThreadId = data.thread_id;
-    localStorage.setItem("travel_thread_id", currentThreadId);
-
     showWorkflow(data);
 
     if (data.requires_approval) {
@@ -212,6 +228,7 @@ async function submitApproval(approved) {
     showWorkflow(data);
     hideApproval();
     showResult(data.answer, data.thread_id, false);
+    currentThreadId = null;
   } catch (error) {
     showError(error.message);
   } finally {

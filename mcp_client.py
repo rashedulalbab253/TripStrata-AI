@@ -61,12 +61,9 @@ def _subprocess_env(**updates: str | None) -> dict[str, str]:
     return env
 
 
-# =========================================================
-# LLM
-# =========================================================
-
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model=GROQ_MODEL,
     api_key=_require_env("GROQ_API_KEY", GROQ_API_KEY),
 )
 

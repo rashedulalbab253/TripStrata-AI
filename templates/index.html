@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TripMate AI</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=2">
 </head>
 <body>
   <div class="page-bg">
@@ -85,6 +85,7 @@
           <p id="threadInfo">Thread ID: -</p>
         </div>
         <div class="result-actions">
+          <button id="jumpApprovalBtn" class="approve-btn hidden" onclick="scrollToApproval()">👤 Review & Approve</button>
           <button class="copy-btn" onclick="copyResult()">Copy</button>
           <button class="download-btn" onclick="downloadPDF()">Download PDF</button>
         </div>
@@ -131,6 +132,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="/static/script.js"></script>
+  <script src="/static/script.js?v=2"></script>
 </body>
 </html>
