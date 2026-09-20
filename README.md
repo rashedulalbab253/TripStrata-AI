@@ -145,13 +145,17 @@ The system runs **7 specialized nodes** in a LangGraph `StateGraph`:
 
 ```
 TripStrata-AI/
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml              # GitHub Actions CI/CD pipeline (lint, test, build, push)
 ├── app.py                         # FastAPI web server & API endpoints
 ├── backend.py                     # Agent orchestration, supervisor, guardrails, HITL
 ├── mcp_client.py                  # MCP client helpers (Tavily, AviationStack, Weather)
 ├── custom_weather_mcp_server.py   # Custom MCP server for OpenWeather API
 ├── requirements.txt               # Python dependencies
 ├── .env.example                   # Environment variable template
-├── Dockerfile                     # Docker support
+├── .dockerignore                  # Docker ignore rules for clean images
+├── Dockerfile                     # Multi-stage production Dockerfile
 ├── assets/
 │   ├── part1_architecture.png     # Part 1 architecture diagram
 │   ├── part2_architecture.png     # Part 2 architecture diagram
@@ -173,11 +177,12 @@ TripStrata-AI/
 - Git
 - [uv](https://docs.astral.sh/uv/) (for `uvx` — required by AviationStack MCP)
 - PostgreSQL database (e.g., [Neon](https://neon.tech/) or [Render](https://render.com/) free tier)
+- Groq API account (Free tier using `openai/gpt-oss-20b`)
 
 ### 1. Clone & set up environment
 
 ```powershell
-git clone https://github.com/your-username/TripStrata-AI.git
+git clone https://github.com/rashedulalbab253/TripStrata-AI.git
 cd TripStrata-AI
 
 python -m venv .venv
@@ -380,8 +385,10 @@ Built as a demonstration of modern AI agent patterns:
 - **Groq** for fast, free-tier LLM inference
 - **FastAPI** for the web backend
 
----
+## 📬 Contact & Author
 
-## 📬 Contact
+- **GitHub**: [@rashedulalbab253](https://github.com/rashedulalbab253)
+- **Docker Hub**: [rashedulalbab1234](https://hub.docker.com/u/rashedulalbab1234)
+- **Repository**: [rashedulalbab253/TripStrata-AI](https://github.com/rashedulalbab253/TripStrata-AI)
 
-For questions or suggestions, open an issue or contact the repository owner.
+For questions, issues, or feature suggestions, feel free to open an issue or submit a pull request!
