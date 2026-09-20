@@ -718,18 +718,48 @@ graph.add_edge("final_agent", END)
 graph.add_edge("guardrail_blocked", END)
 
 # =========================
-# PostgreSQL Checkpointer - original persistence kept
+# PostgreSQL Checkpointer - Auto-reconnecting resilience
 # =========================
 DATABASE_URL = get_database_url()
-_conn = psycopg.connect(
-    DATABASE_URL,
-    autocommit=True,
-    row_factory=dict_row,
-)
-checkpointer = PostgresSaver(_conn)
-checkpointer.setup()
+_conn: psycopg.Connection | None = None
+_checkpointer: PostgresSaver | None = None
+_compiled_graph = None
 
-travel_graph = graph.compile(checkpointer=checkpointer)
+
+def _get_travel_graph():
+    global _conn, _checkpointer, _compiled_graph
+    try:
+        if _conn is None or _conn.closed:
+            _conn = psycopg.connect(
+                DATABASE_URL,
+                autocommit=True,
+                row_factory=dict_row,
+            )
+            _checkpointer = PostgresSaver(_conn)
+            _checkpointer.setup()
+            _compiled_graph = graph.compile(checkpointer=_checkpointer)
+    except Exception as exc:
+        print(f"Reconnecting PostgreSQL checkpointer: {exc}")
+        _conn = psycopg.connect(
+            DATABASE_URL,
+            autocommit=True,
+            row_factory=dict_row,
+        )
+        _checkpointer = PostgresSaver(_conn)
+        _checkpointer.setup()
+        _compiled_graph = graph.compile(checkpointer=_checkpointer)
+    return _compiled_graph
+
+
+class _LazyTravelGraph:
+    def invoke(self, *args, **kwargs):
+        return _get_travel_graph().invoke(*args, **kwargs)
+
+    def ainvoke(self, *args, **kwargs):
+        return _get_travel_graph().ainvoke(*args, **kwargs)
+
+
+travel_graph = _LazyTravelGraph()
 
 
 # =========================
@@ -794,8 +824,9 @@ def run_travel_agent(user_input: str, thread_id: str | None = None):
         thread_id = f"user_{uuid.uuid4().hex}"
 
     config = {"configurable": {"thread_id": thread_id}}
+    active_graph = _get_travel_graph()
 
-    result = travel_graph.invoke(
+    result = active_graph.invoke(
         {
             "messages": [HumanMessage(content=user_input)],
             "user_query": user_input,
@@ -831,7 +862,9 @@ def resume_travel_agent(
         raise ValueError("thread_id is required to resume a travel plan.")
 
     config = {"configurable": {"thread_id": thread_id}}
-    result = travel_graph.invoke(
+    active_graph = _get_travel_graph()
+
+    result = active_graph.invoke(
         Command(
             resume={
                 "approved": approved,

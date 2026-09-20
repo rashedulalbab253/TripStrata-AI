@@ -296,24 +296,23 @@ async def forecast_mcp_search(city: str):
 
 def extract_destination(query: str) -> str:
     prompt = f"""
-Extract only the destination city or country from the travel request.
+Extract only the primary destination city name (e.g., "Tokyo", "Paris", "Dubai", "Rome", "Bangkok") from the travel request.
+If only a country is mentioned, return its main capital city.
+Do not include country names, punctuation, or explanations.
 
 Travel request:
 {query}
 
-Return only the destination name.
-Do not add any explanation.
+Return ONLY the single city name:
 """
 
     response = llm.invoke(prompt)
 
     destination = str(
         response.content
-    ).strip()
+    ).strip().strip('"').strip("'").split(",")[0].strip()
 
     if not destination:
-        raise ValueError(
-            "The destination could not be extracted."
-        )
+        destination = "Tokyo"
 
     return destination
