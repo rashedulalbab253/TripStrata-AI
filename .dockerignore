@@ -1,7 +1,46 @@
-# Environments
-.venv
-env/
+# ===== Python =====
+__pycache__/
+*.py[codz]
+*.egg-info/
+*.egg
+dist/
+build/
+
+# ===== Virtual environments =====
+.venv/
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
+
+# ===== Secrets =====
+.env
+
+# ===== Git =====
+.git/
+.gitignore
+
+# ===== CI/CD =====
+.github/
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===== Docker =====
+Dockerfile
+docker-compose*.yml
+
+# ===== Docs & assets (not needed at runtime) =====
+README.md
+LICENSE
+assets/
+demo.excalidraw
+*.md
+
+# ===== OS files =====
+Thumbs.db
+.DS_Store

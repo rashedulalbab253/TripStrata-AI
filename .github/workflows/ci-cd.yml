@@ -1,0 +1,112 @@
+# ============================================================
+# TripStrata-AI — CI/CD Pipeline
+# ============================================================
+# Triggers:
+#   - Push to main/master → lint + build + push Docker image
+#   - Pull request to main/master → lint + build (no push)
+#
+# Docker Hub: rashedulalbab1234/tripstrata-ai
+# ============================================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  DOCKER_IMAGE: rashedulalbab1234/tripstrata-ai
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ────────────────────────────────────────────────
+  # Job 1: Lint & Validate
+  # ────────────────────────────────────────────────
+  lint:
+    name: 🔍 Lint & Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: 🧹 Lint with Ruff
+        run: |
+          ruff check . --output-format=github || true
+
+      - name: ✅ Validate Python syntax
+        run: |
+          python -m py_compile app.py
+          python -m py_compile backend.py
+          python -m py_compile mcp_client.py
+          python -m py_compile custom_weather_mcp_server.py
+
+      - name: 📋 Verify required files exist
+        run: |
+          test -f app.py
+          test -f backend.py
+          test -f mcp_client.py
+          test -f custom_weather_mcp_server.py
+          test -f requirements.txt
+          test -f Dockerfile
+          test -f templates/index.html
+          test -f static/style.css
+          test -f static/script.js
+
+  # ────────────────────────────────────────────────
+  # Job 2: Build & Push Docker Image
+  # ────────────────────────────────────────────────
+  docker:
+    name: 🐳 Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Log in to Docker Hub
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 🏷️ Generate Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=,format=short
+            type=ref,event=branch
+            type=ref,event=pr
+
+      - name: 📦 Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64

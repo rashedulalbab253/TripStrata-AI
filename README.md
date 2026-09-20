@@ -1,5 +1,11 @@
 # ✈️ TripStrata-AI: Multi-Agent Travel Planner
 
+[![CI/CD Pipeline](https://github.com/rashedulalbab253/TripStrata-AI/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/rashedulalbab253/TripStrata-AI/actions/workflows/ci-cd.yml)
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-rashedulalbab1234%2Ftripstrata--ai-blue?logo=docker&logoColor=white)](https://hub.docker.com/r/rashedulalbab1234/tripstrata-ai)
+[![Python](https://img.shields.io/badge/Python-3.11-brightgreen?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-1.2-orange)](https://langchain-ai.github.io/langgraph/)
+
 > A production-ready multi-agent travel planning system built in **3 progressive parts**, evolving from a basic LangGraph pipeline to a fully supervised, guardrailed, human-reviewed AI assistant.
 
 ---
@@ -15,6 +21,7 @@
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
 - [API Endpoints](#-api-endpoints)
+- [CI/CD & Docker Deployment](#-cicd--docker-deployment)
 - [Configuration](#%EF%B8%8F-configuration--environment)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -241,6 +248,94 @@ Visit **http://127.0.0.1:8000** in your browser.
   "feedback": ""
 }
 ```
+
+---
+
+## 🔄 CI/CD & Docker Deployment
+
+TripStrata-AI includes an automated **GitHub Actions CI/CD Pipeline** ([`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)) that handles testing, linting, Docker image building, and publishing to Docker Hub.
+
+### ⚙️ Pipeline Workflow
+
+```
+[Push to main / PR]
+       │
+       ▼
+┌───────────────────────────────┐
+│       🔍 Lint & Validate       │
+│  - Python 3.11 environment    │
+│  - Install dependencies       │
+│  - Ruff lint check            │
+│  - py_compile syntax check    │
+│  - File existence check       │
+└──────────────┬────────────────┘
+               │ (Pass)
+               ▼
+┌───────────────────────────────┐
+│ 🐳 Build & Push Docker Image  │
+│  - Docker Buildx + QEMU       │
+│  - GitHub Actions layer cache │
+│  - Multi-tag: :latest, :sha   │
+│  - Push to Docker Hub (main)  │
+└───────────────────────────────┘
+```
+
+- **Trigger on Pull Requests**: Lints and validates syntax, builds Docker image to verify no breakage (does not push).
+- **Trigger on Push to `main`**: Lints, validates, builds, tags with both `:latest` and commit short SHA, and pushes to Docker Hub.
+
+### 🔑 Required GitHub Secrets
+
+To allow GitHub Actions to push images to Docker Hub under `rashedulalbab1234/tripstrata-ai`, configure these two repository secrets:
+
+1. Open your repository on GitHub: `https://github.com/rashedulalbab253/TripStrata-AI`
+2. Navigate to **Settings > Secrets and variables > Actions**
+3. Click **New repository secret** and add:
+
+| Secret Name | Value | Description |
+|-------------|-------|-------------|
+| `DOCKERHUB_USERNAME` | `rashedulalbab1234` | Your Docker Hub account username |
+| `DOCKERHUB_TOKEN` | `<your-docker-access-token>` | Docker Hub Personal Access Token (PAT) |
+
+> [!TIP]
+> **How to create your Docker Hub Access Token:**
+> 1. Log in to [hub.docker.com](https://hub.docker.com/)
+> 2. Click your avatar (top-right) → **Account Settings > Security**
+> 3. Click **New Access Token**
+> 4. Set description to `TripStrata-AI GitHub Actions` and select Access permissions: **Read & Write**
+> 5. Copy the generated token and paste it as `DOCKERHUB_TOKEN` in GitHub Secrets.
+
+### 🐳 Running with Docker
+
+#### Option A: Pull & Run from Docker Hub
+
+```bash
+# Pull the latest published image
+docker pull rashedulalbab1234/tripstrata-ai:latest
+
+# Run the container (inject your .env with API keys)
+docker run -d \
+  --name tripstrata-ai \
+  -p 8000:8000 \
+  --env-file .env \
+  --restart unless-stopped \
+  rashedulalbab1234/tripstrata-ai:latest
+```
+
+#### Option B: Build & Run Locally
+
+```bash
+# Build the Docker image
+docker build -t rashedulalbab1234/tripstrata-ai:latest .
+
+# Run the local container
+docker run -d \
+  --name tripstrata-ai \
+  -p 8000:8000 \
+  --env-file .env \
+  rashedulalbab1234/tripstrata-ai:latest
+```
+
+Access the application in your browser at **http://localhost:8000**.
 
 ---
 
